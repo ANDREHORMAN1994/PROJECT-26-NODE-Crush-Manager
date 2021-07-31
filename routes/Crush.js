@@ -4,20 +4,23 @@ const { ValidateFields } = require('../middleware');
 
 const Crush = express.Router();
 
+// STATUS
 const SUCCESS = 200;
 const CRIADO = 201;
 const NAO_EXISTE = 400;
 
+// MODEL
 const readData = async () => {
   const data = JSON.parse(await fs.readFile(`${__dirname}/../crush.json`));
   return data;
 };
 
-const writeData = async (data) => {
+const writeData = async data => {
   await fs.writeFile(`${__dirname}/../crush.json`, JSON.stringify(data));
 };
 
-const addCrush = async (crush) => {
+// CONTROLLER E SERVICE
+const addCrush = async crush => {
   try {
     const data = await readData();
     const id = data[data.length - 1].id + 1;
@@ -48,15 +51,48 @@ const updateCrush = async (id, crush) => {
   }
 };
 
-const deleteCrush = async (id) => {
+const deleteCrush = async id => {
   try {
     const data = await readData();
-    const filterData = data.filter((crush) => parseInt(crush.id, 10) !== parseInt(id, 10));
+    const filterData = data.filter(
+      crush => parseInt(crush.id, 10) !== parseInt(id, 10),
+    );
     await writeData(filterData);
   } catch (error) {
     console.log(error);
   }
 };
+
+// ROTAS
+
+Crush.get('/', async (_request, response, next) => {
+  try {
+    const data = await readData();
+    response.status(SUCCESS).json(data);
+  } catch (error) {
+    console.log(error);
+    return next({
+      status: NAO_EXISTE,
+      message: error.message,
+    });
+  }
+});
+
+Crush.get('/:id', async (request, response, next) => {
+  try {
+    const { id } = request.params;
+    const data = await readData();
+    const crush = data.find(crush => crush.id == id);
+    // console.log(crush)
+    response.status(SUCCESS).json(crush);
+  } catch (error) {
+    console.log(error);
+    return next({
+      status: NAO_EXISTE,
+      message: error.message,
+    });
+  }
+});
 
 Crush.post('/', ValidateFields, async (request, response, next) => {
   try {
@@ -80,7 +116,7 @@ Crush.put('/:id', ValidateFields, async (request, response, next) => {
     const { id } = request.params;
     await updateCrush(id, body);
     const data = await readData();
-    const crush = data.find((c) => parseInt(c.id, 10) === parseInt(id, 10));
+    const crush = data.find(c => parseInt(c.id, 10) === parseInt(id, 10));
     return response.status(SUCCESS).send(crush);
   } catch (error) {
     console.log(error);
@@ -95,7 +131,7 @@ Crush.delete('/:id', async (request, response, next) => {
   try {
     const { id } = request.params;
     const data = await readData();
-    if (!data.some((crush) => parseInt(crush.id, 10) === parseInt(id, 10))) {
+    if (!data.some(crush => parseInt(crush.id, 10) === parseInt(id, 10))) {
       throw new Error('ID não existe');
     }
     await deleteCrush(id);

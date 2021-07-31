@@ -11,9 +11,10 @@ const readData = async () => {
   return data;
 };
 
-Search.get('/', async (_request, response, next) => {
+Search.get('/search', async (_request, response, next) => {
   try {
     const data = await readData();
+    // console.log(data)
     if (!data.length) return response.status(SUCCESS).send([]);
     return response.status(SUCCESS).send(data);
   } catch (error) {
@@ -25,7 +26,7 @@ Search.get('/', async (_request, response, next) => {
   }
 });
 
-Search.get('/search', Auth, async (request, response, next) => {
+Search.get('/search/filter', Auth, async (request, response, next) => {
   try {
     const { q } = request.query;
     const data = await readData();
@@ -45,7 +46,7 @@ Search.get('/search', Auth, async (request, response, next) => {
   }
 });
 
-Search.get('/:id', async (request, response, next) => {
+Search.get('/search/:id', async (request, response, next) => {
   try {
     const { id } = request.params;
     const data = await readData();
